@@ -10,6 +10,7 @@ def get_lines(line_id: int):
     """
     This endpoint returns a single line by its identifier. For each line it returns:
     * `line_id`: the internal id of the line.
+    * `title`: the title of the movie the line appears in.
     * `text`: The line itself.
     * `said by` : What character said the line.
     * `said to` : Who the character said it to
@@ -17,19 +18,28 @@ def get_lines(line_id: int):
     
     """
 
-    line = db.lines.get(line_id)
-    if line:
-        top_chars = [
-            {"character_id": c.id, "character": c.name, "num_lines": c.num_lines}
-            for c in db.characters.values()
-            if c.movie_id == movie_id
-        ]
-        top_chars.sort(key=lambda c: c["num_lines"], reverse=True)
+  
 
+    line = db.lines.get(line_id)
+
+    def filter_fn(l):
+        return l.conversation_id == line.conversation_id
+
+    movie = db.movies.get(line.movie_id)
+    char_1 = db.characters.get(line.character1_id)
+    char_2 = db.characters.get(line.character2_id)
+    in_context = "<html>"
+
+    items = list(filter(filter_fn, db.lines.values()))    
+
+
+    if line:
         result = {
-            "movie_id": movie_id,
+            "line_id": line.line_id,
             "title": movie.title,
-            "top_characters": top_chars[0:5],
+            "said_by": char_1.name,
+            "said_to": char_2.name,
+            "in_context":
         }
         return result
 
