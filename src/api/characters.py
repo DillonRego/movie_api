@@ -107,12 +107,10 @@ def list_characters(
     """
 
     if name:
-
         def filter_fn(c):
             return c.name and name.upper() in c.name
 
     else:
-
         def filter_fn(_):
             return True
 
