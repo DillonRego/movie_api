@@ -61,7 +61,8 @@ def list_lines(
     * `movie_title`: The title of the movie the line appears in.
     * `text : the lines text.
     * `conversation_id`: The internal id of the conversation.
-    * `characters_involved`: a touple containing the characters involved in the conversation.
+    * `characters_involved`: a touple containing the characters 
+    involved in the conversation.
 
     You can filter for a line whose text contain a string by using the
     `text` query parameter.
@@ -88,8 +89,9 @@ def list_lines(
             "movie_title": db.movies.get(c.movie_id).title,
             "text": c.line_text,
             "conversation_id": c.conv_id, 
-            "characters_involved": (db.characters.get(db.conversations.get(c.conv_id).c1_id),
-                                    db.characters.get(db.conversations.get(c.conv_id).c2_id))
+            "characters_involved": 
+            (db.characters.get(db.conversations.get(c.conv_id).c1_id),
+            db.characters.get(db.conversations.get(c.conv_id).c2_id))
         }
         for c in items[offset : offset + limit]
 
@@ -100,13 +102,14 @@ def list_lines(
 
 # Add get parameters
 @router.get("/lines/bycharacter/{character_id}", tags=["lines"])
-def list_lines(
+def list_linesbychar(
     character_id : int,
     limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
 ):
     """
-    This endpoint returns a list of lines said by a specific character. For each line it returns:
+    This endpoint returns a list of lines said by a 
+    specific character. For each line it returns:
     
     * `line_id`: the internal id of the line. Can be used to query the
       `/lines/{line_id}` endpoint.
