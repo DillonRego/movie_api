@@ -16,6 +16,8 @@ def get_lines(line_id: int):
     * `in_context` : Shows the rest of the conversation with the line in question highlighted as html
     """
     line = db.lines.get(line_id)
+    if not line:
+            raise HTTPException(status_code=404, detail="line not found.")
 
     def filter_fn(l):
         return l.conv_id == line.conv_id
@@ -41,8 +43,6 @@ def get_lines(line_id: int):
             "in_context": in_context
         }
         return result
-
-    raise HTTPException(status_code=404, detail="line not found.")
 
 # Add get parameters
 @router.get("/lines/", tags=["lines"])
