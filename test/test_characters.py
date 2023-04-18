@@ -7,11 +7,11 @@ import json
 client = TestClient(app)
 
 
-def test_get_character():
-    response = client.get("/characters/7421")
+def test_get_linesbychar():
+    response = client.get("/lines/bycharacter/0?limit=5&offset=5")
     assert response.status_code == 200
 
-    with open("test/characters/7421.json", encoding="utf-8") as f:
+    with open("test/lines/49.json", encoding="utf-8") as f:
         assert response.json() == json.load(f)
 
 
