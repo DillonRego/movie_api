@@ -14,7 +14,6 @@ def get_lines(line_id: int):
     * `text`: The line itself.
     * `said by` : What character said the line.
     * `in_context` : Shows the rest of the conversation with the line in question highlighted as html
-    
     """
     line = db.lines.get(line_id)
 
@@ -45,82 +44,66 @@ def get_lines(line_id: int):
 
     raise HTTPException(status_code=404, detail="line not found.")
 
-
-class line_sort_options(str, Enum): #TODO fix this
-    movie_title = "movie_title"
-    year = "year"
-    rating = "rating"
-
-
-
 # Add get parameters
 @router.get("/lines/", tags=["lines"])
 def list_lines(
-    name: str = "",
+    text: str = "",
     limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
-    sort: line_sort_options = line_sort_options.movie_title,
 ):
     """
-    This endpoint returns a list of lines. For each movie it returns:
+    This endpoint returns a list of lines. For each line it returns:
     
     * `line_id`: the internal id of the line. Can be used to query the
       `/lines/{line_id}` endpoint.
-    * `movie_id`: the internal id of the movie the line appears in
+    * `movie_id`: the internal id of the movie the line appears in. can be used
+    to querry the '/movies/{movie_id}' endpoint
     * `movie_title`: The title of the movie the line appears in.
     * `text : the lines text.
-    * `conversation_id`: The IMDB rating of the movie.
-    * `characters_involved`: The number of IMDB votes for the movie.
+    * `conversation_id`: The internal id of the conversation.
+    * `characters_involved`: a touple containing the characters involved in the conversation.
 
-    You can filter for movies whose titles contain a string by using the
-    `name` query parameter.
-
-    You can also sort the results by using the `sort` query parameter:
-    * `movie_title` - Sort by movie title alphabetically.
-    * `year` - Sort by year of release, earliest to latest.
-    * `rating` - Sort by rating, highest to lowest.
+    You can filter for a line whose text contain a string by using the
+    `text` query parameter.
 
     The `limit` and `offset` query
     parameters are used for pagination. The `limit` query parameter specifies the
     maximum number of results to return. The `offset` query parameter specifies the
     number of results to skip before returning results.
     """
-    if name:
-        def filter_fn(m):
-            return m.title and name.lower() in m.title
+    if text:
+        def filter_fn(l):
+            return l.line_text and text.lower() in l.line_text
     else:
         def filter_fn(_):
             return True
 
-    items = list(filter(filter_fn, db.movies.values()))
-    if sort == movie_sort_options.movie_title:
-        items.sort(key=lambda m: m.title)
-    elif sort == movie_sort_options.year:
-        items.sort(key=lambda m: m.year)
-    elif sort == movie_sort_options.rating:
-        items.sort(key=lambda m: m.imdb_rating, reverse=True)
+    items = list(filter(filter_fn, db.lines.values()))
+    items.sort(key=lambda l: l.id)
 
     json = (
         {
-            "movie_id": m.id,
-            "movie_title": m.title,
-            "year": m.year,
-            "imdb_rating": m.imdb_rating,
-            "imdb_votes": m.imdb_votes,
+            "line_id": l.id,
+            "movie_id" : l.movie_id,
+            "movie_title": db.movies.get(l.movie_id).title,
+            "text": l.line_text,
+            "conversation_id": l.conv_id, 
+            "characters_involved": (db.characters.get(db.conversations.get(l.conv_id).c1_id),
+                                    db.characters.get(db.conversations.get(l.conv_id).c2_id))
         }
-        for m in items[offset : offset + limit]
+        for l in items[offset : offset + limit]
+
     )
 
     return json
 
 
 # Add get parameters
-@router.get("/lines/", tags=["lines"])
+@router.get("/lines/bycharacter/{character_id}", tags=["lines"])
 def list_lines(
-    name: str = "",
+    character_id : int,
     limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
-    sort: line_sort_options = line_sort_options.movie_title,
 ):
     """
     This endpoint returns a list of lines said by a specific character. For each line it returns:
@@ -128,48 +111,26 @@ def list_lines(
     * `line_id`: the internal id of the line. Can be used to query the
       `/lines/{line_id}` endpoint.
     * `movie_id`: the internal id of the movie the line appears in
-    * `movie_title`: The title of the movie the line appears in.
+    * `character_id` : the internal id of the character the line belongs to
     * `text : the lines text.
     * `conversation_id`: The IMDB rating of the movie.
-    * `characters_involved`: The number of IMDB votes for the movie.
-
-    You can filter for movies whose titles contain a string by using the
-    `name` query parameter.
-
-    You can also sort the results by using the `sort` query parameter:
-    * `movie_title` - Sort by movie title alphabetically.
-    * `year` - Sort by year of release, earliest to latest.
-    * `rating` - Sort by rating, highest to lowest.
-
-    The `limit` and `offset` query
-    parameters are used for pagination. The `limit` query parameter specifies the
-    maximum number of results to return. The `offset` query parameter specifies the
-    number of results to skip before returning results.
     """
-    if name:
-        def filter_fn(m):
-            return m.title and name.lower() in m.title
-    else:
-        def filter_fn(_):
-            return True
 
-    items = list(filter(filter_fn, db.movies.values()))
-    if sort == movie_sort_options.movie_title:
-        items.sort(key=lambda m: m.title)
-    elif sort == movie_sort_options.year:
-        items.sort(key=lambda m: m.year)
-    elif sort == movie_sort_options.rating:
-        items.sort(key=lambda m: m.imdb_rating, reverse=True)
+    def filter_fn(l):
+        return character_id == l.c_id
+
+    items = list(filter(filter_fn, db.lines.values()))
+    items.sort(key=lambda l: l.id)
 
     json = (
         {
-            "movie_id": m.id,
-            "movie_title": m.title,
-            "year": m.year,
-            "imdb_rating": m.imdb_rating,
-            "imdb_votes": m.imdb_votes,
+            "line_id": l.id,
+            "movie_id": l.movie_id,
+            "character_id": l.c_id,
+            "text": l.line_text,
+            "conversation_id": l.conv_id,
         }
-        for m in items[offset : offset + limit]
+        for l in items[offset : offset + limit]
     )
 
     return json
