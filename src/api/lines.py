@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException
-from enum import Enum
 from src import database as db
 from fastapi.params import Query
 
@@ -13,14 +12,15 @@ def get_lines(line_id: int):
     * `title`: the title of the movie the line appears in.
     * `text`: The line itself.
     * `said by` : What character said the line.
-    * `in_context` : Shows the rest of the conversation with the line in question highlighted as html
+    * `in_context` : Shows the rest of the conversation with the line in 
+    question bolded as html
     """
     line = db.lines.get(line_id)
     if not line:
             raise HTTPException(status_code=404, detail="line not found.")
 
-    def filter_fn(l):
-        return l.conv_id == line.conv_id
+    def filter_fn(a):
+        return a.conv_id == line.conv_id
 
     movie = db.movies.get(line.movie_id)
     char = db.characters.get(line.c_id)
@@ -72,26 +72,26 @@ def list_lines(
     number of results to skip before returning results.
     """
     if text:
-        def filter_fn(l):
-            return l.line_text and text.lower() in l.line_text
+        def filter_fn(a):
+            return a.line_text and text.lower() in a.line_text
     else:
         def filter_fn(_):
             return True
 
     items = list(filter(filter_fn, db.lines.values()))
-    items.sort(key=lambda l: l.id)
+    items.sort(key=lambda b: b.id)
 
     json = (
         {
-            "line_id": l.id,
-            "movie_id" : l.movie_id,
-            "movie_title": db.movies.get(l.movie_id).title,
-            "text": l.line_text,
-            "conversation_id": l.conv_id, 
-            "characters_involved": (db.characters.get(db.conversations.get(l.conv_id).c1_id),
-                                    db.characters.get(db.conversations.get(l.conv_id).c2_id))
+            "line_id": c.id,
+            "movie_id" : c.movie_id,
+            "movie_title": db.movies.get(c.movie_id).title,
+            "text": c.line_text,
+            "conversation_id": c.conv_id, 
+            "characters_involved": (db.characters.get(db.conversations.get(c.conv_id).c1_id),
+                                    db.characters.get(db.conversations.get(c.conv_id).c2_id))
         }
-        for l in items[offset : offset + limit]
+        for c in items[offset : offset + limit]
 
     )
 
@@ -116,21 +116,21 @@ def list_lines(
     * `conversation_id`: The IMDB rating of the movie.
     """
 
-    def filter_fn(l):
-        return character_id == l.c_id
+    def filter_fn(a):
+        return character_id == a.c_id
 
     items = list(filter(filter_fn, db.lines.values()))
-    items.sort(key=lambda l: l.id)
+    items.sort(key=lambda b: b.id)
 
     json = (
         {
-            "line_id": l.id,
-            "movie_id": l.movie_id,
-            "character_id": l.c_id,
-            "text": l.line_text,
-            "conversation_id": l.conv_id,
+            "line_id": c.id,
+            "movie_id": c.movie_id,
+            "character_id": c.c_id,
+            "text": c.line_text,
+            "conversation_id": c.conv_id,
         }
-        for l in items[offset : offset + limit]
+        for c in items[offset : offset + limit]
     )
 
     return json
