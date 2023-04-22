@@ -1,74 +1,68 @@
 import csv
+from src.datatypes import Character, Movie, Conversation, Line
 
-# TODO: You will want to replace all of the code below. It is just to show you
-# an example of reading the CSV files where you will get the data to complete
-# the assignment.
 
-print("reading movies")
+def try_parse(type, val):
+    try:
+        return type(val)
+    except ValueError:
+        return None
+
 
 with open("movies.csv", mode="r", encoding="utf8") as csv_file:
-    movies = [
-        {k: v for k, v in row.items()}
+    movies = {
+        try_parse(int, row["movie_id"]): Movie(
+            try_parse(int, row["movie_id"]),
+            row["title"] or None,
+            row["year"] or None,
+            try_parse(float, row["imdb_rating"]),
+            try_parse(int, row["imdb_votes"]),
+            row["raw_script_url"] or None,
+        )
         for row in csv.DictReader(csv_file, skipinitialspace=True)
-    ]
-    
+    }
+
 with open("characters.csv", mode="r", encoding="utf8") as csv_file:
-    characters = [
-        {k: v for k, v in row.items()}
-        for row in csv.DictReader(csv_file, skipinitialspace=True)
-    ]
+    characters = {}
+    for row in csv.DictReader(csv_file, skipinitialspace=True):
+        char = Character(
+            try_parse(int, row["character_id"]),
+            row["name"] or None,
+            try_parse(int, row["movie_id"]),
+            row["gender"] or None,
+            try_parse(int, row["age"]),
+            0,
+        )
+        characters[char.id] = char
 
 with open("conversations.csv", mode="r", encoding="utf8") as csv_file:
-    conversations = [
-        {k: v for k, v in row.items()}
-        for row in csv.DictReader(csv_file, skipinitialspace=True)
-    ]
+    conversations = {}
+    for row in csv.DictReader(csv_file, skipinitialspace=True):
+        conv = Conversation(
+            try_parse(int, row["conversation_id"]),
+            try_parse(int, row["character1_id"]),
+            try_parse(int, row["character2_id"]),
+            try_parse(int, row["movie_id"]),
+            0,
+        )
+        conversations[conv.id] = conv
 
 with open("lines.csv", mode="r", encoding="utf8") as csv_file:
-    lines = [
-        {k: v for k, v in row.items()}
-        for row in csv.DictReader(csv_file, skipinitialspace=True)
-    ]
+    lines = {}
+    for row in csv.DictReader(csv_file, skipinitialspace=True):
+        line = Line(
+            try_parse(int, row["line_id"]),
+            try_parse(int, row["character_id"]),
+            try_parse(int, row["movie_id"]),
+            try_parse(int, row["conversation_id"]),
+            try_parse(int, row["line_sort"]),
+            row["line_text"],
+        )
+        lines[line.id] = line
+        c = characters.get(line.c_id)
+        if c:
+            c.num_lines += 1
 
-    character_by_id = dict()
-    gender_by_id = dict()
-    for character in characters:
-        key = str(character["character_id"])
-        gender = character["gender"]
-        character_by_id.__setitem__(key, character["name"])
-        if gender == "":
-            gender = None
-        gender_by_id.__setitem__(key, gender)
-
-    movie_by_id = {}
-    for movie in movies:
-        movie_by_id[movie["movie_id"]] = movie["title"]
-
-    char_lines = {}
-    for character in character_by_id:
-        char_lines[character] = 0
-
-    for line in lines:
-        current_character = line["character_id"]
-        char_lines[current_character] = char_lines[current_character] + 1
-
-    lines_by_character = []
-    for character in characters:
-        name = character_by_id[character["character_id"]]
-        newCharacter = {
-            "character" : name,
-            "character_id" : int(character["character_id"]),
-            "num_lines" : int(char_lines[character["character_id"]]),
-            "movie_id" : character["movie_id"]
-        }
-        lines_by_character.append(newCharacter)
-    lines_by_character.sort(reverse=True, key= lambda x: x["num_lines"])
-    lines_by_character.sort(reverse=True, key= lambda x: x["movie_id"])
-
-    top_chars_by_movie = {}
-    entry = []
-    for movie in movies:
-        entry = list(filter(lambda x: x["movie_id"] == movie["movie_id"],
-                            lines_by_character))
-        del entry[5:]
-        top_chars_by_movie[movie["movie_id"]] = entry
+        conv = conversations.get(line.conv_id)
+        if conv:
+            conv.num_lines += 1

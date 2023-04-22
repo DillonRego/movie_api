@@ -22,6 +22,14 @@ def test_characters():
     with open("test/characters/root.json", encoding="utf-8") as f:
         assert response.json() == json.load(f)
 
+# New test case (includes multiple conversation partners)
+def test_get_character2():
+    response = client.get("/characters/2")
+    assert response.status_code == 200
+
+    with open("test/characters/2.json", encoding="utf-8") as f:
+        assert response.json() == json.load(f)
+
 
 def test_sort_filter():
     response = client.get(
@@ -35,14 +43,18 @@ def test_sort_filter():
     ) as f:
         assert response.json() == json.load(f)
 
+# New test case ()
 def test_sort_filter2():
     response = client.get(
-        "/characters/?name=zzz&limit=50&offset=0&sort=number_of_lines"
+        "/characters/?name=%20&limit=250&offset=42&sort=movie"
     )
     assert response.status_code == 200
 
-    assert response.json() == []
-
+    with open(
+        "test/characters/characters-name=space&limit=250&offset=42&sort=movie.json",
+        encoding="utf-8",
+    ) as f:
+        assert response.json() == json.load(f)
 
 
 def test_404():
