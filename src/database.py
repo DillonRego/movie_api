@@ -38,7 +38,8 @@ def update_log():
 def upload_new_log():
     output = io.StringIO()
     csv_writer = csv.DictWriter(
-        output, fieldnames=["conversation_id", "character1_id","character2_id", "movie_id"]
+        output, fieldnames=["conversation_id", "character1_id",
+                            "character2_id", "movie_id"]
     )
     csv_writer.writeheader()
     csv_writer.writerows(logs)
