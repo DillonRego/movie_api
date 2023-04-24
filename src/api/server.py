@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from src.api import characters, movies, lines, pkg_util
+from src.api import characters, movies, lines, pkg_util, conversations
 
 description = """
 Movie API returns dialog statistics on top hollywood movies from decades past.
@@ -29,6 +29,10 @@ tags_metadata = [
         "name": "lines",
         "description": "Access information on movie quotes.",
     },
+    {
+        "name": "conversations",
+        "description": "Access information on conversations."
+    }
 ]
 
 app = FastAPI(

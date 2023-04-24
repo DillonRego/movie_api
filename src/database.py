@@ -19,39 +19,34 @@ supabase: Client = create_client(supabase_url, supabase_api_key)
 
 sess = supabase.auth.get_session()
 
-# TODO: Below is purely an example of reading and then writing a csv from supabase.
-# You should delete this code for your working example.
-
-# START PLACEHOLDER CODE
-
 # Reading in the log file from the supabase bucket
-log_csv = (
-    supabase.storage.from_("movie-api")
-    .download("movie_conversations_log.csv")
-    .decode("utf-8")
-)
-
 logs = []
-for row in csv.DictReader(io.StringIO(log_csv), skipinitialspace=True):
-    logs.append(row)
+conv_id = 0
+
+def update_log():
+    log_csv = (
+        supabase.storage.from_("movie-api")
+        .download("conversations.csv")
+        .decode("utf-8")
+    )
+
+    for row in csv.DictReader(io.StringIO(log_csv), skipinitialspace=True):
+        logs.append(row)
 
 
 # Writing to the log file and uploading to the supabase bucket
 def upload_new_log():
     output = io.StringIO()
     csv_writer = csv.DictWriter(
-        output, fieldnames=["post_call_time", "movie_id_added_to"]
+        output, fieldnames=["conversation_id", "character1_id","character2_id", "movie_id"]
     )
     csv_writer.writeheader()
     csv_writer.writerows(logs)
     supabase.storage.from_("movie-api").upload(
-        "movie_conversations_log.csv",
+        "conversations.csv",
         bytes(output.getvalue(), "utf-8"),
         {"x-upsert": "true"},
     )
-
-
-# END PLACEHOLDER CODE
 
 
 def try_parse(type, val):
@@ -87,6 +82,7 @@ with open("characters.csv", mode="r", encoding="utf8") as csv_file:
         )
         characters[char.id] = char
 
+update_log()
 with open("conversations.csv", mode="r", encoding="utf8") as csv_file:
     conversations = {}
     for row in csv.DictReader(csv_file, skipinitialspace=True):
@@ -98,6 +94,7 @@ with open("conversations.csv", mode="r", encoding="utf8") as csv_file:
             0,
         )
         conversations[conv.id] = conv
+        conv_id = conv.id + 1
 
 with open("lines.csv", mode="r", encoding="utf8") as csv_file:
     lines = {}
