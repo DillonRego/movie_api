@@ -2,8 +2,6 @@ from fastapi.testclient import TestClient
 
 from src.api.server import app
 
-import json
-
 conversation = {
   "character_1_id": 0,
   "character_2_id": 1,
