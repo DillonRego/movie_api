@@ -4,7 +4,7 @@ from src.api.server import app
 
 import json
 
-conversation = json.dumps({
+conversation = {
   "character_1_id": 0,
   "character_2_id": 1,
   "lines": [
@@ -13,9 +13,9 @@ conversation = json.dumps({
       "line_text": "string"
     }
   ]
-})
+}
 
-conversationB = json.dumps({
+conversationB = {
   "character_1_id": 0,
   "character_2_id": 0,
   "lines": [
@@ -24,16 +24,14 @@ conversationB = json.dumps({
       "line_text": "string"
     }
   ]
-})
+}
 
 client = TestClient(app)
 def test_post_conversation():
-    response = client.post("/movies/0/conversations/", json=json.dumps(conversation))
+    response = client.post("/movies/0/conversations/", json = conversation)
     assert response.status_code == 200
-
-    with "83074" as f:
-        assert response.json() == f
+    assert response.json() == 83074
 
 def test_post_invalid_conversation():
-    response = client.post("/movies/0/conversations/", json = json.dumps(conversationB))
+    response = client.post("/movies/0/conversations/", json = conversationB)
     assert response.status_code == 400
