@@ -2,8 +2,6 @@ from fastapi import APIRouter, HTTPException
 from src import database as db
 from pydantic import BaseModel
 from typing import List
-from datetime import datetime
-
 
 # FastAPI is inferring what the request body should look like
 # based on the following two classes.
@@ -45,10 +43,12 @@ def add_conversation(movie_id: int, conversation: ConversationJson):
     if not char1 or not char2:
         raise HTTPException(status_code=404, detail="character not found.")
     if char1 == char2:
-        raise HTTPException(status_code=400, detail="conversation must contain unique characters.")
+        raise HTTPException(status_code=400, 
+            detail="conversation must contain unique characters.")
     for line in conversation.lines:
         if line.character_id != char1.id and line.character_id != char2.id:
-            raise HTTPException(status_code=400, detail="lines contain unknown character.")
+            raise HTTPException(status_code=400, 
+            detail="lines contain unknown character.")
     if(char1.movie_id != movie_id or 
        char2.movie_id != movie_id):
         raise HTTPException(status_code=400, detail="character not in movie.")
