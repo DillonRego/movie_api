@@ -107,27 +107,4 @@ def list_movies(
         for m in items[offset : offset + limit]
     )
 
-    if name != "":
-        movie_list = list(filter(lambda x: name in x["title"], db.movies))
-    else:
-        movie_list = db.movies
-
-    if sort == "movie_title":
-        movie_list = sorted(movie_list, key = lambda x: x["title"])
-    elif sort == "year":
-        movie_list = sorted(movie_list, key = lambda x: x["year"])
-    elif sort == "rating":
-        movie_list = sorted(movie_list, key = lambda x: x["imdb_rating"], reverse=True)
-
-    for i in range(offset, limit):
-        if i < len(movie_list):
-            new_movie = {
-                "movie_id" : int(movie_list[i]["movie_id"]),
-                "movie_title" : movie_list[i]["title"],
-                "year" : movie_list[i]["year"],
-                "imdb_rating" : float(movie_list[i]["imdb_rating"]),
-                "imdb_votes" : int(movie_list[i]["imdb_votes"])
-            }
-            movies.append(new_movie)
-
-    return movies
+    return json
