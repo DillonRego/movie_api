@@ -1,5 +1,53 @@
 import csv
 from src.datatypes import Character, Movie, Conversation, Line
+import os
+import io
+from supabase import Client, create_client
+import dotenv
+
+# DO NOT CHANGE THIS TO BE HARDCODED. ONLY PULL FROM ENVIRONMENT VARIABLES.
+dotenv.load_dotenv()
+supabase_api_key = os.environ.get("SUPABASE_API_KEY")
+supabase_url = os.environ.get("SUPABASE_URL")
+
+if supabase_api_key is None or supabase_url is None:
+    raise Exception(
+        "You must set the SUPABASE_API_KEY and SUPABASE_URL environment variables."
+    )
+
+supabase: Client = create_client(supabase_url, supabase_api_key)
+
+sess = supabase.auth.get_session()
+
+# Reading in the log file from the supabase bucket
+logs = []
+conv_id = 0
+
+def update_log():
+    log_csv = (
+        supabase.storage.from_("movie-api")
+        .download("conversations.csv")
+        .decode("utf-8")
+    )
+
+    for row in csv.DictReader(io.StringIO(log_csv), skipinitialspace=True):
+        logs.append(row)
+
+
+# Writing to the log file and uploading to the supabase bucket
+def upload_new_log():
+    output = io.StringIO()
+    csv_writer = csv.DictWriter(
+        output, fieldnames=["conversation_id", "character1_id",
+                            "character2_id", "movie_id"]
+    )
+    csv_writer.writeheader()
+    csv_writer.writerows(logs)
+    supabase.storage.from_("movie-api").upload(
+        "conversations.csv",
+        bytes(output.getvalue(), "utf-8"),
+        {"x-upsert": "true"},
+    )
 
 
 def try_parse(type, val):
@@ -35,6 +83,7 @@ with open("characters.csv", mode="r", encoding="utf8") as csv_file:
         )
         characters[char.id] = char
 
+update_log()
 with open("conversations.csv", mode="r", encoding="utf8") as csv_file:
     conversations = {}
     for row in csv.DictReader(csv_file, skipinitialspace=True):
@@ -46,6 +95,7 @@ with open("conversations.csv", mode="r", encoding="utf8") as csv_file:
             0,
         )
         conversations[conv.id] = conv
+        conv_id = conv.id + 1
 
 with open("lines.csv", mode="r", encoding="utf8") as csv_file:
     lines = {}

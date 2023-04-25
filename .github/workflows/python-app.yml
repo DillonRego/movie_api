@@ -1,7 +1,9 @@
 name: Python package
 
 on: [push]
-
+env:
+    SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
+    SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
 jobs:
   build:
 
