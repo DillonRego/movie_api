@@ -105,23 +105,9 @@ def list_characters(
     maximum number of results to return. The `offset` query parameter specifies the
     number of results to skip before returning results.
     """
-    if name != "":
-      temp = list(filter(lambda x: name.upper() in x["name"], db.characters))
-    else:
-      temp = db.characters
-    character_list = []
-    if (sort == character_sort_options.character):
-        temp = sorted(temp, key = lambda x: x["name"])
-    elif (sort == character_sort_options.movie):
-        temp = sorted(temp, key = lambda x: x["movie_id"])
-    else:
-        temp = sorted(temp, key = lambda x: 
-          db.char_lines[x["character_id"]], reverse=True)
-
     if name:
         def filter_fn(c):
             return c.name and name.upper() in c.name
-
     else:
         def filter_fn(_):
             return True
