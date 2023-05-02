@@ -3,6 +3,7 @@ from enum import Enum
 from collections import Counter
 from fastapi.params import Query
 from src import database as db
+import sqlalchemy
 
 router = APIRouter()
 
@@ -38,10 +39,10 @@ def get_character(id: int):
 #     raise HTTPException(status_code=404, detail="character not found.")
 
 
-# class character_sort_options(str, Enum):
-#     character = "character"
-#     movie = "movie"
-#     number_of_lines = "number_of_lines"
+class character_sort_options(str, Enum):
+    character = "character"
+    movie = "movie"
+    number_of_lines = "number_of_lines"
 
 
 @router.get("/characters/", tags=["characters"])
@@ -49,7 +50,7 @@ def list_characters(
     name: str = "",
     limit: int = Query(50, ge=1, le=250),
     offset: int = Query(0, ge=0),
-    # sort: character_sort_options = character_sort_options.character,
+    sort: character_sort_options = character_sort_options.character,
 ):
     """
     This endpoint returns a list of characters. For each character it returns:
@@ -72,36 +73,70 @@ def list_characters(
     maximum number of results to return. The `offset` query parameter specifies the
     number of results to skip before returning results.
     """
+    conn = db.engine.connect()
 
-    conn = engine.connect()
-
-    if name:
-        def filter_fn(c):
-            return c.name and name.upper() in c.name
-
+    if sort is character_sort_options.character:
+        order_by = db.characters.c.name
+    elif sort is character_sort_options.movie:
+        order_by = db.characters.c.movie_id
+    elif sort is character_sort_options.number_of_lines:
+        order_by = sqlalchemy.desc(db.characters.c.imdb_rating)
     else:
-        def filter_fn(_):
-            return True
+        assert False
 
-    items = list(filter(filter_fn, db.characters.values()))
-
-    def none_last(x, reverse=False):
-        return (x is None) ^ reverse, x
-
-    if sort == character_sort_options.character:
-        items.sort(key=lambda c: none_last(c.name))
-    elif sort == character_sort_options.movie:
-        items.sort(key=lambda c: none_last(db.movies[c.movie_id].title))
-    elif sort == character_sort_options.number_of_lines:
-        items.sort(key=lambda c: none_last(c.num_lines, True), reverse=True)
-
-    json = (
-        {
-            "character_id": c.id,
-            "character": c.name,
-            "movie": db.movies[c.movie_id].title,
-            "number_of_lines": c.num_lines,
-        }
-        for c in items[offset : offset + limit]
+    stmt = (
+        sqlalchemy.select(
+            db.characters.c.character_id,
+            db.characters.c.character,
+            db.movies.filter(db.characters.c.movie_id == db.movies.c.movie_id).title,
+            db.lines.fiter(db.characters.c.character_id == db.lines.c.character_id)
+        )
+        .limit(limit)
+        .offset(offset)
+        .order_by(order_by, db.movies.c.movie_id)
     )
+
+    # filter only if name parameter is passed
+    if name != "":
+        stmt = stmt.where(db.movies.c.title.ilike(f"%{name}%"))
+
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        json = []
+        for row in result:
+            json.append(
+                {
+                    "movie_id": row.movie_id,
+                    "movie_title": row.title,
+                    "year": row.year,
+                    "imdb_rating": row.imdb_rating,
+                    "imdb_votes": row.imdb_votes,
+                }
+            )
+
     return json
+    
+
+
+    # items = list(filter(filter_fn, db.characters.values()))
+
+    # def none_last(x, reverse=False):
+    #     return (x is None) ^ reverse, x
+
+    # # if sort == character_sort_options.character:
+    # #     items.sort(key=lambda c: none_last(c.name))
+    # # elif sort == character_sort_options.movie:
+    # #     items.sort(key=lambda c: none_last(db.movies[c.movie_id].title))
+    # # elif sort == character_sort_options.number_of_lines:
+    # #     items.sort(key=lambda c: none_last(c.num_lines, True), reverse=True)
+
+    # json = (
+    #     {
+    #         "character_id": c.id,
+    #         "character": c.name,
+    #         "movie": db.movies[c.movie_id].title,
+    #         "number_of_lines": c.num_lines,
+    #     }
+    #     for c in items[offset : offset + limit]
+    # )
+    # return json

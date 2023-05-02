@@ -23,5 +23,3 @@ lines = sqlalchemy.Table("lines", metadata_obj, autoload_with=engine)
 characters = sqlalchemy.Table("characters", metadata_obj, autoload_with=engine)
 
 conversations = sqlalchemy.Table("conversations", metadata_obj, autoload_with=engine)
-
-print(movies.columns)
