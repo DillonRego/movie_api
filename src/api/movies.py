@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from enum import Enum
 from src import database as db
 from fastapi.params import Query
@@ -11,12 +11,13 @@ router = APIRouter()
 @router.get("/movies/{movie_id}", tags=["movies"])
 def get_movie(movie_id: int):
     """
-    This endpoint returns a single movie by its identifier. For each movie it returns:
+    This endpoint returns a single movie by its identifier. For each movie it 
+    returns:
     * `movie_id`: the internal id of the movie.
     * `title`: The title of the movie.
-    * `top_characters`: A list of characters that are in the movie. The characters
-      are ordered by the number of lines they have in the movie. The top five
-      characters are listed.
+    * `top_characters`: A list of characters that are in the movie. The 
+      characters are ordered by the number of lines they have in the movie. 
+      The top five characters are listed.
 
     Each character is represented by a dictionary with the following keys:
     * `character_id`: the internal id of the character.
@@ -65,8 +66,8 @@ def get_movie(movie_id: int):
 
     # print(stmt)
     with db.engine.connect() as conn:
-        result = conn.execute(sqlalchemy.text(sql), [{"movie_id": movie_id}]).fetchone()
-        print(result)
+        result = conn.execute(sqlalchemy.text(sql), 
+                              [{"movie_id": movie_id}]).fetchone()
         json = []
         json.append(
         {
