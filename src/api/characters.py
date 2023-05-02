@@ -1,6 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from enum import Enum
-from collections import Counter
 from fastapi.params import Query
 from src import database as db
 import sqlalchemy
@@ -13,8 +12,8 @@ def get_character(id: int):
     This endpoint returns a single character by its identifier. For each 
     character
     it returns:
-    * `character_id`: the internal id of the character. Can be used to query the
-      `/characters/{character_id}` endpoint.
+    * `character_id`: the internal id of the character. Can be used to query 
+    the `/characters/{character_id}` endpoint.
     * `character`: The name of the character.
     * `movie`: The movie the character is from.
     * `gender`: The gender of the character.
@@ -92,7 +91,8 @@ def list_characters(
 ):
     """
     This endpoint returns a list of characters. For each character it returns:
-    * `character_id`: the internal id of the character. Can be used to query the
+    * `character_id`: the internal id of the character. Can be used to 
+    query the
       `/characters/{character_id}` endpoint.
     * `character`: The name of the character.
     * `movie`: The movie the character is from.
@@ -107,8 +107,10 @@ def list_characters(
     * `number_of_lines` - Sort by number of lines, highest to lowest.
 
     The `limit` and `offset` query
-    parameters are used for pagination. The `limit` query parameter specifies the
-    maximum number of results to return. The `offset` query parameter specifies the
+    parameters are used for pagination. The `limit` query parameter 
+    specifies the
+    maximum number of results to return. The `offset` query parameter 
+    specifies the
     number of results to skip before returning results.
     """
     conn = db.engine.connect()
@@ -123,7 +125,8 @@ def list_characters(
         s_val = "characters.character_id ASC"
 
     sql = """
-    SELECT characters.character_id, characters.name, characters.movie_id, count(lines.line_id)
+    SELECT characters.character_id, characters.name, characters.movie_id, 
+    count(lines.line_id)
     FROM characters
     JOIN lines ON lines.character_id = characters.character_id
     WHERE name iLIKE '%{}%'
@@ -133,7 +136,8 @@ def list_characters(
     """.format(name, s_val)
 
     with db.engine.connect() as conn:
-        result = conn.execute(sqlalchemy.text(sql),  [{"b": limit, "c": offset}])
+        result = conn.execute(sqlalchemy.text(sql),  
+                              [{"b": limit, "c": offset}])
         json = []
         for row in result:
             json.append(
