@@ -116,7 +116,7 @@ def list_linesbychar(
     * `movie_id`: the internal id of the movie the line appears in
     * `character_id` : the internal id of the character the line belongs to
     * `text : the lines text.
-    * `conversation_id`: The IMDB rating of the movie.
+    * `conversation_id`: The internal id of the conversation the line appreas in.
     """
 
     def filter_fn(a):
