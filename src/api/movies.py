@@ -2,7 +2,6 @@ from fastapi import APIRouter
 from enum import Enum
 from src import database as db
 from fastapi.params import Query
-from sqlalchemy import func
 import sqlalchemy
 
 router = APIRouter()
